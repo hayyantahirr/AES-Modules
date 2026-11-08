@@ -73,6 +73,19 @@ export function hydrateMonopolyState(rawState) {
         )
       : null;
 
+    const name = (savedProp?.name || baseProp.name || '').trim();
+    const category = (savedProp?.category || baseProp.category || '').trim();
+    const description = (
+      savedProp?.description !== undefined && savedProp?.description !== null && String(savedProp?.description).trim() !== ''
+        ? String(savedProp.description).trim()
+        : (savedProp?.importance || baseProp.description || baseProp.importance || '').trim()
+    );
+    const areaChallenges = (
+      savedProp?.areaChallenges !== undefined && savedProp?.areaChallenges !== null && String(savedProp?.areaChallenges).trim() !== ''
+        ? String(savedProp.areaChallenges).trim()
+        : (savedProp?.area_challenges || savedProp?.problems || baseProp.areaChallenges || baseProp.problems || '').trim()
+    );
+
     const openingValue =
       savedProp?.openingValue !== undefined && Number(savedProp.openingValue) > 0
         ? Number(savedProp.openingValue)
@@ -97,19 +110,32 @@ export function hydrateMonopolyState(rawState) {
       Array.isArray(savedProp?.upgradeCosts) && savedProp.upgradeCosts.length === 3
         ? savedProp.upgradeCosts.map(Number)
         : baseProp.upgradeCosts.map(Number);
+    const purchasePrice = Number(
+      savedProp?.purchasePrice ?? savedProp?.purchase_price ?? savedProp?.auctionedPrice ?? 0
+    );
 
     return {
       ...baseProp,
+      ...(savedProp || {}),
+      name,
+      category,
+      description,
+      importance: description,
+      areaChallenges,
+      problems: areaChallenges,
       openingValue,
+      basePrice: openingValue,
       level3Target,
       valueIncreasePerLevel,
       rentValues,
+      initialRent: rentValues[0],
       rentIncreasePerLevel,
       upgradeCosts,
       maxLevel: 3,
       ownerTeamId: ownerTeam ? ownerTeam.id : savedProp?.ownerTeamId || null,
       ownerTeamName: ownerTeam ? ownerTeam.name : savedProp?.ownerTeamName || null,
-      purchasePrice: Number(savedProp?.purchasePrice || 0),
+      purchasePrice,
+      auctionedPrice: purchasePrice,
       upgradeLevel: Math.min(3, Math.max(0, Number(savedProp?.upgradeLevel || 0))),
       attachedUtilities: Array.isArray(savedProp?.attachedUtilities)
         ? savedProp.attachedUtilities.map(Number)
@@ -223,15 +249,24 @@ export async function persistMonopolyStore(nextStore) {
     teams: hydrated.teams,
     properties: hydrated.properties.map((p) => ({
       id: p.id,
+      name: p.name,
+      category: p.category,
+      description: p.description || p.importance || '',
+      importance: p.importance || p.description || '',
+      areaChallenges: p.areaChallenges || p.problems || '',
+      problems: p.problems || p.areaChallenges || '',
       openingValue: Number(p.openingValue || 0),
+      basePrice: Number(p.openingValue || 0),
       level3Target: Number(p.level3Target || 0),
       valueIncreasePerLevel: Number(p.valueIncreasePerLevel || 0),
       rentIncreasePerLevel: Number(p.rentIncreasePerLevel || 0),
       rentValues: Array.isArray(p.rentValues) ? p.rentValues.map(Number) : [15, 25, 38, 55],
+      initialRent: Array.isArray(p.rentValues) ? Number(p.rentValues[0]) : 15,
       upgradeCosts: Array.isArray(p.upgradeCosts) ? p.upgradeCosts.map(Number) : [10, 15, 20],
       ownerTeamId: p.ownerTeamId || null,
       ownerTeamName: p.ownerTeamName || null,
       purchasePrice: Number(p.purchasePrice || 0),
+      auctionedPrice: Number(p.purchasePrice || 0),
       upgradeLevel: Math.min(3, Math.max(0, Number(p.upgradeLevel || 0))),
       attachedUtilities: Array.isArray(p.attachedUtilities) ? p.attachedUtilities : []
     })),
