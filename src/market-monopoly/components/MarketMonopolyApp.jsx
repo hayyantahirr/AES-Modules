@@ -1070,7 +1070,7 @@ export default function MarketMonopolyApp() {
                                       className="text-[9px] font-rounded block opacity-75"
                                       style={{ color: "var(--text-sub)" }}
                                     >
-                                      Current Rent
+                                      Current Rentt
                                     </span>
                                     <strong className="text-[#2E7D52]">
                                       Rs {rent}L
